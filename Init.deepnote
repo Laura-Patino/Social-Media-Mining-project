@@ -1,0 +1,62 @@
+environment: {}
+execution: {}
+metadata:
+  createdAt: 2024-04-08T14:20:58.447Z
+  modifiedAt: 2026-10-06T18:43:33.327Z
+project:
+  id: 2a0a9319-b4e1-4b13-bb12-60140e97ee7c
+  integrations:
+    - id: 2cb791a5-371c-4027-972a-a12abe7d1aef
+      name: Social_Media_Mining_project
+      type: github_package
+  name: Progetto SMM
+  notebooks:
+    - blocks:
+        - id: 265a59881e424b1d9d0f6ea40894c761
+          blockGroup: 4bbc409dd08d401d827e1fff08ffab54
+          sortingKey: "000000"
+          type: markdown
+          content: >-
+            ## Initialization Notebook
+
+            This is your initialization notebook.
+
+
+            **What's this for?**
+
+
+            You can put custom code you want us to run every time we setup your environment in here. 
+
+
+            **Awesome! Anything I should not put in here?**
+
+
+            Please don't install `jupyter` or `jedi` packages, they would break your Deepnote environment. Also, no need
+            to put `!pip install`s here, we already save those automatically!
+
+
+            **I want to learn more!**
+
+
+            Great! Just [head over to our docs](https://deepnote.com/docs/custom-initialization).
+          metadata: {}
+        - id: a81b357699164df8a3575642673fafcf
+          blockGroup: 4861195542514fdcaee1ea92a956a8a0
+          sortingKey: "000001"
+          type: code
+          content: >-
+            %%bash
+
+            # If your project has a 'requirements.txt' file, we'll install it here.
+
+            if test -f requirements.txt
+              then
+                pip install -r ./requirements.txt
+              else echo "There's no requirements.txt, so nothing to install."
+            fi
+          metadata: {}
+      executionMode: block
+      id: 8330f4c0ab624f67a7cba3b17d88d87e
+      isModule: false
+      name: Init
+version: 1.0.0

@@ -1,0 +1,2952 @@
+environment: {}
+execution: {}
+metadata:
+  createdAt: 2024-04-08T14:20:58.447Z
+  modifiedAt: 2026-10-06T18:43:33.339Z
+project:
+  id: 2a0a9319-b4e1-4b13-bb12-60140e97ee7c
+  integrations:
+    - id: 2cb791a5-371c-4027-972a-a12abe7d1aef
+      name: Social_Media_Mining_project
+      type: github_package
+  name: Progetto SMM
+  notebooks:
+    - blocks:
+        - id: a2d59141b1c84883a6be087f1b1565ee
+          blockGroup: 196055620c704b95b4a60a3c895186ff
+          sortingKey: "000000"
+          type: text-cell-h2
+          content: Import
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a13c85287efc4d6aaf2fb67bc1dfe33a
+          blockGroup: 7d244f7d776949d78ca2ee01c90b2150
+          sortingKey: "000001"
+          type: code
+          content: >-
+            import httpx
+
+            import json
+
+            import requests
+
+            import networkx as nx
+
+            import numpy as np
+
+            import time
+
+
+            from statsmodels.distributions.empirical_distribution import ECDF
+
+            import matplotlib.pyplot as plt
+
+            import scipy.stats
+
+            import seaborn as sns
+
+            import pandas as pd
+
+
+            from collections import defaultdict, Counter
+
+
+            #community detection
+
+            from community import community_louvain as community_louvain
+
+
+            from networkx.algorithms import bipartite
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: cbccd26997c74a74ad622939f87f32d8
+          blockGroup: dfb901c4ff85457f989dcb6adca2b784
+          sortingKey: "000002"
+          type: code
+          content: >-
+            api_key = json.load(open('credentials.json'))['api_key']
+
+            url_base = 'https://api.themoviedb.org/3'
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 273ab4f8a108434da4a53193bfa6b3a5
+          blockGroup: 08209a793bd64f94afcddb6dcf0fd9a2
+          sortingKey: "000003"
+          type: markdown
+          content: >-
+            ## Lista generi dei film
+
+            Scarico dal endpoint **genre/movie/list?language=en** la lista dei generi disponibili. Salvo i dati
+            scaricati in un dizionario key=id e value=nome_genere.
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 3f310f99407848e19a569e57c09471be
+          blockGroup: 784e4deb9bde42a8960fda4cffbc42b4
+          sortingKey: "000004"
+          type: code
+          content: >-
+            response = httpx.get(f'{url_base}/genre/movie/list?language=en-US&api_key={api_key}').json()
+
+            # oggetto: { genres: [{id, name},{id, name},...] }
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: b91bb477aa3246258c9faa102b8d76c9
+          blockGroup: f7eb5daa1d5b429ca8bc3548a6f9a1dd
+          sortingKey: "000005"
+          type: code
+          content: >-
+            generi_film = dict()
+
+            for g in response['genres']:
+                generi_film[g['id']] = g['name']
+            generi_film
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 493d7a61d28746d3847d8d9b15681d8a
+          blockGroup: e6071bc776374ec7b82eda78bda1ce08
+          sortingKey: "000006"
+          type: markdown
+          content: Ci sono in totale **19 generi cinematografici**, presenti in TheMovieDB.
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 4d05fb6c551e407da826c2a4755f0027
+          blockGroup: d5dae5fcaddc4f3ba8f621fa0355e756
+          sortingKey: "000007"
+          type: markdown
+          content: >-
+            ## Ottenimento degli attori popolari
+
+
+            Ottengo tutti gli attori popolari in una certa data. 
+
+            - Salvo in un file la lista degli id degli attori. Le informazioni relative tanto posso reperirile in
+            seguito.
+
+            - In seguito scarico tutti i film a cui hanno recitato gli attori
+          metadata:
+            deepnote_app_block_visible: true
+        - id: cebe8101f99b4336a1c3b70724743573
+          blockGroup: 030774f8be5c4b1f9b7b9a291a36c930
+          sortingKey: "000008"
+          type: code
+          content: >
+            page = 1
+
+            attori = []
+
+            while page <=500:
+                response = httpx.get(f'https://api.themoviedb.org/3/person/popular?api_key={api_key}&page={page}').json()
+                attori.extend(response["results"])
+                page = page + 1
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 9aa38792a29744a187d2cc155b9a871d
+          blockGroup: 94873a2aba824cf09d60b0e70cccdb99
+          sortingKey: "000009"
+          type: code
+          content: >-
+            #salvataggio attori
+
+            json.dump(attori, open('popular_actors.json','w+'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 40c080945a1a4b349099b1d67d63a1d6
+          blockGroup: 62888e2acebe45c2b6fd7ae0ad6931e1
+          sortingKey: "000010"
+          type: text-cell-p
+          content: "Ordinamento degli attori per popolarità e troncamento fino all'indice 986, che corrisponde ad un valore di
+            popolarità di 23.405:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 75
+                fromCodePoint: 70
+        - id: c2f8ae7756b3403380d35600389f1279
+          blockGroup: ea64a0d92b6444eb8759480b288758d6
+          sortingKey: "000011"
+          type: code
+          content: >-
+            ordinato = sorted(attori_popularity.items(), key=lambda x: x[1], reverse=True)
+
+            attori_popolari = ordinato[:986]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: d3fb5adf02e144b3a615b332e941ed5d
+          blockGroup: 78c44a5b29994cf48532c3da780077f5
+          sortingKey: "000012"
+          type: text-cell-p
+          content: "ordinamento per popolarità:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: d2d716db70194d7db11994b72cbd47d6
+          blockGroup: d9c9c4afef8c4269a685994b976bf80f
+          sortingKey: "000013"
+          type: code
+          content: "attori_popolari.sort(key=lambda x: x[1], reverse=True)"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: cceb433d9bae49faade70f03a0176db7
+          blockGroup: 312fb3078a2d4bc9ae48f105b7f648c6
+          sortingKey: "000014"
+          type: code
+          content: json.dump(attori_popolari, open('top_attori.json', 'w'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 988dfd27125b4baba7bc76a65bfcb2a0
+          blockGroup: 2dd197a8ee7d4dc0b22970ea6f86554a
+          sortingKey: "000015"
+          type: markdown
+          content: >
+            ### Lettura file 987 attori popolari
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 10c68d71b40743a69bf87b8ab0c14d31
+          blockGroup: a7c06ca04c61430e8ee8f020dec52d0f
+          sortingKey: "000016"
+          type: code
+          content: >-
+            #lettura file attori popolari
+
+            popular = json.load(open('top_attori.json'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 2f75e1645f274f328b4710f7bdcd1848
+          blockGroup: 56186b0720f24e7ba62172469d0b8eeb
+          sortingKey: "000017"
+          type: markdown
+          content: Creazione di due liste contenenti nello stesso ordine gli ID e i nomi di ciasun attore.
+          metadata:
+            deepnote_app_block_visible: true
+        - id: eb8646cadf2f48a5a675f6c09995dc5b
+          blockGroup: 8931b544d88f4d06a2442bc3a8c24ee0
+          sortingKey: "000018"
+          type: code
+          content: >-
+            def getNome(attore):
+                response = httpx.get(f'{url_base}/person/{attore}?language=en-US&api_key={api_key}').json(
+                return response['name']
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 5424d6533fd448aeac0878c5889272c0
+          blockGroup: b5c71324ed9649ee8246519411bb094d
+          sortingKey: "000019"
+          type: code
+          content: popular[0]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: d9281cb046764aa9aabbab91f92e0011
+          blockGroup: 5952158b236d453c915595b3636d2543
+          sortingKey: "000020"
+          type: code
+          content: >-
+            actors_id = []
+
+            actors_names = []
+
+            for actor in popular: #Owen wilson:887 #Ben Stiller: 7399 #Richard Gere: 1205 #Julia Roberts: 1686
+                actors_id.append(actor[0])
+                actors_names.append(getNome(actor[0]))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 1f0c79bc8c684775b9e7bd66967e88cb
+          blockGroup: 65c655bc46e84f02b33c309a8411557b
+          sortingKey: "000021"
+          type: code
+          content: >-
+            print(len(actors_id), len(actors_names))
+
+            actors_names
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 6e4189eedc7248b9962c2c7050629c55
+          blockGroup: a22b4fe0002d4a6f82b9a79db9292517
+          sortingKey: "000022"
+          type: code
+          content: json.dump(actors_id, open('data/actors_id.json', 'w'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 2a0a147aef1e44f4ab2ef44dd7f5f022
+          blockGroup: d718a85d30244dd4aca01ddf8651f262
+          sortingKey: "000023"
+          type: code
+          content: json.dump(actors_names, open('data/actors_name.json','w'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: f1162ae885294953baf6b30bee5b68e3
+          blockGroup: 4a12348fead24b26adf59f8d9cea0792
+          sortingKey: "000024"
+          type: markdown
+          content: "### Film a cui ogni attore ha recitato"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: bc9639de9a8443349670e35700fe9f80
+          blockGroup: fc82b136e9114ee884f859faf9799617
+          sortingKey: "000025"
+          type: code
+          content: >-
+            actors_id = json.load(open('data/actors_id.json'))
+
+            actors_names = json.load(open('data/actors_name.json'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: c5064a07dc0643b29ea8e230ad13180c
+          blockGroup: 12ba29471de84a548060fd94eae56f9d
+          sortingKey: "000026"
+          type: text-cell-p
+          content: "Rimuovo gli attori che pur avendo un grado alto di popolarità non hanno recitato in alcun film oppure ne hanno
+            solo uno. "
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: d17d5ca9206546e68af39ff3d8642427
+          blockGroup: f5949f934889429f8164ef78397c0275
+          sortingKey: "000027"
+          type: code
+          content: >
+            lista_attore_film = []
+
+
+            for actorID in actors_id:
+                response = httpx.get(f'{url_base}/person/{actorID}/movie_credits?language=en-US&api_key={api_key}').json()
+                for film in response['cast']:
+                   lista_attore_film.append((int(actorID), film['id']))
+
+            #print(len(lista_attore_film)) #52536 #prima del eliminazione di attori con 0 o 1 solo film!
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 0a413c737de34f6ebc405313d97d5567
+          blockGroup: c7323a0f696941e88b7849d5aee1ebd6
+          sortingKey: "000028"
+          type: code
+          content: lista_attore_film[:5]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 7871eabd36c846858e05293c0f98e555
+          blockGroup: 8d2606aaa9a54a8c8cc3a5e6646683e9
+          sortingKey: "000029"
+          type: code
+          content: "len(lista_attore_film) #lista len 52517, set len 52502"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 2a0247a8552f4283a5a3ebd312f655be
+          blockGroup: deff7e2b912b4deebc7e26636b3c3be8
+          sortingKey: "000030"
+          type: code
+          content: json.dump(lista_attore_film, open('data/attore_film.json', 'w'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 7a8ef730aa2f41ee861bc435a2f391d2
+          blockGroup: dee4b3a19cf8489f9d8397632d88a4a1
+          sortingKey: "000031"
+          type: text-cell-p
+          content: 'Rimozione di "attori" che non hanno recitato in alcun film (in quanto non "attori") oppure solo in uno:'
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 03e46b53766a4598a30811a762fa0a2c
+          blockGroup: 980ef78134dc498987c489bdbf315408
+          sortingKey: "000032"
+          type: code
+          content: >-
+            # print(len(actors_id))
+
+            # for actor in actors_id:
+
+            #     if actor == 2450028: #4208595 rimosso
+
+            #         actors_id.remove(actor)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: be7d525ffdbc47b3941bff4e2da40482
+          blockGroup: 3d30a666894744b3b621168ba4b71243
+          sortingKey: "000033"
+          type: code
+          content: print(len(actors_id), len(actors_names))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 359d5db50c61483990cb414dba5aeb22
+          blockGroup: 6edb8bd482234efe859b9396c983a8f8
+          sortingKey: "000034"
+          type: text-cell-p
+          content: Ottengo la lista di films_id senza ripetizioni
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 29
+                fromCodePoint: 20
+        - id: 18cb3f4a72bc4b5a8a36d6e12e1ab03f
+          blockGroup: 6da20c018f53469b9c19c308523f666e
+          sortingKey: "000035"
+          type: code
+          content: >-
+            print(lista_attore_film[:10])
+
+            print(lista_attore_film[0][0], lista_attore_film[0][1])
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: e9f85494d28548f59416d0651c08d860
+          blockGroup: 7510cd5295c74c18ad45b39de742f2d6
+          sortingKey: "000036"
+          type: code
+          content: >-
+            films_id = set()
+
+            for line in lista_attore_film:
+                attore, film = line
+                films_id.add(film)
+            # films_id = list(set(film[1] for film in lista_attore_film))
+
+            len(films_id) 
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 88cf4ea95c3442a68d4c7478bcb116a2
+          blockGroup: 4a6b4881bc5849b7bec7472e01202ed3
+          sortingKey: "000037"
+          type: code
+          content: json.dump(films_id, open('data/films_id.json', 'w'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 45db1279e76c4fec8f7ad3ccbfaf0ebe
+          blockGroup: 7b5300ea406749cb93ab6ba3a28c6ada
+          sortingKey: "000038"
+          type: code
+          content: films_id = json.load(open('data/films_id.json'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 30439f52e79b4702942d9847e89faa8c
+          blockGroup: d86fe40f5cd048fc8fb3bc02ff9518c0
+          sortingKey: "000039"
+          type: code
+          content: >-
+            print(min(films_id), max(films_id), len(films_id))
+
+            print(min(actors_id), max(actors_id), len(actors_id))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 5fa1d238bd5a4ec9ab8259479555290a
+          blockGroup: 096d64324f1d4c15bc3123bb3873b848
+          sortingKey: "000040"
+          type: code
+          content: lista_attore_film = json.load(open('data/attore_film.json'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 5839b568ce5e42188eff2687e7adc50d
+          blockGroup: 72ad0575352f4528a922991b97e8eb38
+          sortingKey: "000041"
+          type: code
+          content: >-
+            mapped_films_id = [x+4529650 for x in films_id]
+
+            mapped_edges = []
+
+            for attore, film in lista_attore_film:
+                edge = (attore, film+4529650)
+                mapped_edges.append(edge)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 3e77adc6c1504ef9af0dabb573e8f378
+          blockGroup: 4054bdc189e7445fb62a8f400a0bb03d
+          sortingKey: "000042"
+          type: code
+          content: len(lista_attore_film), len(mapped_edges)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 9d77d1cb993e49579710487fe04c4ead
+          blockGroup: b46bbb17787843a481fb17913eeceb51
+          sortingKey: "000043"
+          type: text-cell-h2
+          content: Creazione del grafo bipartito
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: f993dbddc0ae4b309140e73ba8e11602
+          blockGroup: fec65aeda47848b0bf9890c6697bd27e
+          sortingKey: "000044"
+          type: code
+          content: >-
+            B = nx.Graph()
+
+            B.add_nodes_from(actors_id, bipartite=0)
+
+            B.add_nodes_from(mapped_films_id, bipartite=1)
+
+            B.add_edges_from(mapped_edges)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 15a27668f2394eda87c0e05553fa8fc2
+          blockGroup: a1528b0dfadc4d1d8b6db97700f2f01c
+          sortingKey: "000045"
+          type: code
+          content: "print(B) #34029 nodi e 52502 archi"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 1bc75ac2ceb84e1181e03dcb468f001f
+          blockGroup: 152ca6f5560649b8bd3d74e4e3d2dec7
+          sortingKey: "000046"
+          type: text-cell-h3
+          content: Proiezione del grafo
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 2d9b32d782d64377bb768e119c28394a
+          blockGroup: c65ee2794d2e4661b884c29cd2a18b43
+          sortingKey: "000047"
+          type: code
+          content: B_proj = bipartite.weighted_projected_graph(B, actors_id)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 0ff93c2ea5824f24baac248937220351
+          blockGroup: bb2b09f2f7c84ac2a40e8bf650fe6527
+          sortingKey: "000048"
+          type: code
+          content: "print(B_proj) #964 nodi e 29242 link"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 77bb9be2dca84584ace6b51647ebdd75
+          blockGroup: 5a9cdb4315fd4c7c9f795f0bf515189a
+          sortingKey: "000049"
+          type: text-cell-h3
+          content: Aggiunta del attributo name ai nodi
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: cc96a42b66d747848c0b1b9f8f0905cf
+          blockGroup: 92df8eaddcc54ed4a6fa12bb2129561f
+          sortingKey: "000050"
+          type: text-cell-p
+          content: Controllo lunghezza id e name salvati prima
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: da0e2eb2bde94f94abc4594383a45733
+          blockGroup: c9c995b246c84d0f957d1d917782c437
+          sortingKey: "000051"
+          type: code
+          content: >-
+            len(actors_id), len(actors_names) #contengono rispettivamente la lista di ID  e name
+
+            #actors_id#
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 571af6cd6d634a6391eaaaf23ca9a625
+          blockGroup: eb21c8b2c34741de80860f1c30b9d70f
+          sortingKey: "000052"
+          type: code
+          content: >-
+            names = dict()
+
+            for i, id_attore in enumerate(actors_id):
+                names[id_attore] = actors_names[i]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 5745e3ad6ddb45bca686cf91bcda2b9d
+          blockGroup: d65ef6838fea477caf917d1f81721a99
+          sortingKey: "000053"
+          type: code
+          content: "#names"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: ceaea773d84641098294d104acbb9fd0
+          blockGroup: fa2b144aca664d359a2290327b775a1f
+          sortingKey: "000054"
+          type: code
+          content: nx.set_node_attributes(B_proj, names ,'name')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: c9b9476c484049fba0b2b45a18530018
+          blockGroup: f189bebe00cf46eebdd0328ee8c763a9
+          sortingKey: "000055"
+          type: code
+          content: B_proj.edges(data=True)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 55fd00a935ba456da64de244c4cec11e
+          blockGroup: 1ca568280c6945b7bd6e61cef3113a64
+          sortingKey: "000056"
+          type: code
+          content: nx.write_gexf(B_proj, 'data/graph.gexf')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 25128cf6b1ba4716b1941ebf52432061
+          blockGroup: f5be2dc229e9434ebf6e3514de61fa2a
+          sortingKey: "000057"
+          type: text-cell-h2
+          content: Misurazione sul grafo
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: efb2c6eb20e3404fa584d05eeb8f09b3
+          blockGroup: 78a6cd94b3ec4dff86df5b739f6ab206
+          sortingKey: "000058"
+          type: code
+          content: >-
+            B_proj = nx.read_gexf('data/graph_assortativity.gexf')
+
+            print(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 036a8029aea743a88c9c24dc77243f86
+          blockGroup: 96cfaa6adf2b4adcb1da4903037847ef
+          sortingKey: "000059"
+          type: text-cell-p
+          content: "Rimozione dei nodi isolati:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 8d1bcf1ffb5a405ab66dddc28a81176c
+          blockGroup: ba3b0e87afa94056aef13b9b3a51f1b4
+          sortingKey: "000060"
+          type: code
+          content: B_proj.remove_nodes_from(list(nx.isolates(B_proj)))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: dc76149383074aeb8142aef72ce189bc
+          blockGroup: ee7426515e824f0e9170a0fa9b7dd6bf
+          sortingKey: "000061"
+          type: text-cell-p
+          content: Grafo proiettato con 918 nodi e 29.242 link
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 24
+                fromCodePoint: 21
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 29
+                fromCodePoint: 25
+        - id: 40dba48a0f8d4f51a5ee251d3c421600
+          blockGroup: b7c322a2dc544e87ab52b3087ed2d1cb
+          sortingKey: "000062"
+          type: code
+          content: print(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 176ddc5446d346baab3acecfcd929aed
+          blockGroup: b4bf0a60376e4fb680308d57e410d1c2
+          sortingKey: "000063"
+          type: text-cell-p
+          content: "Densità: 0.06947443947892983"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: fcb828e78788422092e2a1c8e9648a83
+          blockGroup: f580fd0732b54bc996b83aebebc4792c
+          sortingKey: "000064"
+          type: code
+          content: >-
+            density =nx.density(B_proj)
+
+            density
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: ea6cf73017de44f8860e4ba51e08b823
+          blockGroup: a2c85e4a6720401fa44aab34ff0efcfe
+          sortingKey: "000065"
+          type: text-cell-p
+          content: "Random graph:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 13
+                fromCodePoint: 0
+        - id: 4073dbcbaa304f2a9b238bc05b756705
+          blockGroup: 60b9e61f8130420fb30d2ca45a44f262
+          sortingKey: "000066"
+          type: code
+          content: >-
+            random_graph = nx.fast_gnp_random_graph(B_proj.order(),density)
+
+            print(random_graph)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: bac97f43b60c485087266c1c1a48eddc
+          blockGroup: ea8d1082fb414fd2a12cba0140fbb193
+          sortingKey: "000067"
+          type: text-cell-p
+          content: "Degree di ogni nodo: "
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: b07949e4aac248deb61eb4236cf7a2f1
+          blockGroup: 7488d1df18cf42519d667519f4a7c5c5
+          sortingKey: "000068"
+          type: text-cell-bullet
+          content: "degree = {ID_attore : grado}"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 535dfc65bc1b477190cd8f39a3d190e4
+          blockGroup: 5773cad94c4045ceb4c75767a6d92cf0
+          sortingKey: "000069"
+          type: code
+          content: >-
+            degree = dict(B_proj.degree()) 
+
+            #degree
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: c26a65acdf384ce7b4c72be51fc8b83c
+          blockGroup: 94cb94207eb14f388003a56ea10c171e
+          sortingKey: "000070"
+          type: text-cell-p
+          content: "Top 10 attori con alto degree (ATTORI CHE HANNO RECITATO IN PIù FILM):"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 69
+                fromCodePoint: 31
+        - id: 23099372fd47452db0cbb3b3b9970d8f
+          blockGroup: 7444fa9c80c44b4aa729c61491148d63
+          sortingKey: "000071"
+          type: code
+          content: >-
+            ordered_degree = Counter(degree).most_common()
+
+            top10_degree = ordered_degree[:10] 
+
+            top10_degree
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 1bfa5f52313846d8941ef0afee4b6c3c
+          blockGroup: bf7e8a90190c4582be1e25fd84458fc4
+          sortingKey: "000072"
+          type: text-cell-p
+          content: "Altre statistiche:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: e0af8a22e02843489ac7181d9b6d1baa
+          blockGroup: 0fb2e090dcc94ee9973e63e8545a65c3
+          sortingKey: "000073"
+          type: text-cell-bullet
+          content: "grado medio: 63.70806100217865"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 3f9f5f4db2c24deda3da7055ad8335de
+          blockGroup: c68224342e5e4b349781a5b7a387757e
+          sortingKey: "000074"
+          type: text-cell-bullet
+          content: "deviazione standard :  52.965230510979985"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: cd4f19caeb7346ebbb7cd4dae36a98af
+          blockGroup: 5b69434f174e4b519ae75a845fadd568
+          sortingKey: "000075"
+          type: text-cell-bullet
+          content: "mediana: 52.0 -> siccome mediana < grado medio => presenza di outliers"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: dba69bd62dcb477c875f6d954d566128
+          blockGroup: 93d60cb0116a482c810417ab5151d0ed
+          sortingKey: "000076"
+          type: text-cell-bullet
+          content: "grado minimo: 1 -> hanno un film in comune con gli altri attori della rete"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: d0c6dea1524a4dcdbbee3fd2fdff62d8
+          blockGroup: 9964d277f1464e2cb33c4bddf30a07e3
+          sortingKey: "000077"
+          type: text-cell-bullet
+          content: "grado massimo: 278 -> l'attore con grado massimo della rete è: 2231 - Samuel L. Jackson"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: ec1acc77723043d6a80f0723be2ab537
+          blockGroup: c7933ee338fc4677a058a205fd4fa093
+          sortingKey: "000078"
+          type: code
+          content: >-
+            degree_list =list(degree.values())
+
+            print(f'Grado medio: {np.mean(degree_list)}') #in media le connessioni per ogni utente sono 98
+
+            print(f'Standard deviation: {np.std(degree_list)}')
+
+            print(f'Median: {np.median(degree_list)}') #presenza di outlier siccome mediana < grado medio (la media è
+            più influenzata dagli outliers)
+
+            print(f'Min: {np.min(degree_list)}')
+
+            print(f'Max: {np.max(degree_list)}')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 75d27ad2565743418c5beb53f4e0c5c1
+          blockGroup: 5746b80bd1444786a7fb1d1a033d7049
+          sortingKey: "000079"
+          type: markdown
+          content: >
+            ### Distribuzione dei gradi
+
+            __CCDF__ Complementary Cumulative Distribution Function:
+
+            * $ P(X > x) $
+
+            * Per calcolare la CCDF possiamo utilizzare ancora ECDF del modulo statsmodel, ma al momento del plot usiamo
+            il complementare di ogni elemento (1-y)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 8f9f41cdeaa24de09454fe8d1059e248
+          blockGroup: ea6cd1b7b5544d87815012fc4907dbf4
+          sortingKey: "000080"
+          type: code
+          content: >-
+            cdf_function = ECDF(degree_list) #rete reale
+
+            x = np.unique(degree_list)
+
+            y = cdf_function(x)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: e8f824cfc7844b2b8853c11793a10a88
+          blockGroup: ef126cb1f3384c3bb52ad92c8b151721
+          sortingKey: "000081"
+          type: code
+          content: >
+            cdf_random = ECDF(list(dict(random_graph.degree()).values())) #random network
+
+            x_random = np.unique(list(dict(random_graph.degree()).values()))
+
+            y_random = cdf_random(x_random)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+            is_code_hidden: false
+        - id: 5a02a89538eb4183b765a11533359b8d
+          blockGroup: 1977d8f7fcc14fcfa3d4984730f548af
+          sortingKey: "000082"
+          type: code
+          content: >-
+            # Visualizzazione
+
+            fig_cdf_function = plt.figure(figsize=(8,4))
+
+            assi = fig_cdf_function.gca()
+
+            assi.loglog(x,1-y,color = 'tomato', linestyle = '--', marker= 'o',ms = 5) #loglog al posto di plot trasofrma
+            le scale degli assi (potenze di 10 per la scala logaritmica) utile per distribuire dei valori molto
+            attaccatti
+
+            assi.set_xlabel('Grado',size=15, weight = 'bold')
+
+            assi.set_ylabel('ECCDF',size=15, weight = 'bold')
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 17014d0347c84953b4cd6266ad47b341
+          blockGroup: b4da02e62c6c4f7a8be6eb534ce1f7af
+          sortingKey: "000083"
+          type: code
+          content: >-
+            percentile_99 = np.percentile(degree_list,99)
+
+            print(percentile_99)
+
+            hub_nodi = []
+
+            for nodo, grado in degree.items():
+                if(grado >= percentile_99): hub_nodi.append(nodo)
+            hub_nodi = [k for k,v in degree.items() if v>= percentile_99]
+
+            print(len(hub_nodi))
+
+            print(list(hub_nodi))
+          metadata:
+            deepnote_app_block_visible: true
+        - id: e1fe2a865fc3450da5354de28339036a
+          blockGroup: ecd65f113954485291a5412cf94a8d25
+          sortingKey: "000084"
+          type: text-cell-p
+          content: "Confronto con una random network:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 8ca6a070ee0c481aaca6999d620f2733
+          blockGroup: e947bb0744df4ff4a3cb6910815b3895
+          sortingKey: "000085"
+          type: code
+          content: >-
+            fig_cdf_fb = plt.figure(figsize=(10,4))
+
+            axes = fig_cdf_fb.gca()
+
+            axes.set_xscale('log')
+
+            #axes.set_yscale('log')
+
+            axes.plot(x,1-y,marker='o',ms=5, linestyle='--', label = 'Real network')
+
+            axes.plot(x_random,1-y_random,marker='+',ms=7, linestyle='--', label = 'ER network')
+
+            axes.set_xlabel('Grado',size=15, weight = 'bold')
+
+            axes.set_ylabel('P(X>x)',size=15, weight = 'bold')
+
+
+            plt.legend()
+
+            plt.show()
+          metadata:
+            deepnote_app_block_visible: true
+        - id: dce9168eea854b28ac9ffb2718b732f5
+          blockGroup: b1c747d41189468d98a9db506f03ce69
+          sortingKey: "000086"
+          type: markdown
+          content: "## Centralità"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 6a51167d5782441abe19a3c3ce4d75e3
+          blockGroup: eec8ddce12ec46528c5eac078c66eb76
+          sortingKey: "000087"
+          type: markdown
+          content: "- **Degree centrality**: calcola la centralità di un nodo in base al suo grado, più film ha in comune con
+            altri attori allora è più centrale."
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 7e627bf3958347d6999cbfcc086689bf
+          blockGroup: e74a71a964754cca86540ca56209264b
+          sortingKey: "000088"
+          type: code
+          content: >
+            degree_c = nx.degree_centrality(B_proj) #return dict key=nodo value=degree centrality
+
+            nodo_d_centr = list(degree_c.items())
+
+            nodo_d_centr.sort(key=lambda x: x[1], reverse=True)
+
+            nodo_d_centr[:10]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 8f49f098edeb408ca4acbd442da6b7f2
+          blockGroup: e1150c72294e4a77ba17a2e24b97535c
+          sortingKey: "000089"
+          type: markdown
+          content: "- **Closeness centrality**: un nodo è più centrale se riesce a raggiungere più velocamente gli altri nodi"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 62dd224a17a74ea4ab1f007f141b6116
+          blockGroup: ab6264a074fb495fb86851cf2c0e8398
+          sortingKey: "000090"
+          type: code
+          content: >-
+            closeness_c = nx.closeness_centrality(B_proj)
+
+            node_c_centr = list(closeness_c.items())
+
+            node_c_centr.sort(key=lambda x: x[1], reverse=True)
+
+            node_c_centr[:10]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 73ac87e559f440d8a56dc4d9417617c1
+          blockGroup: 720679cb619143669a8e10b20bb57bad
+          sortingKey: "000091"
+          type: markdown
+          content: "- **Betweenness Centrality**: calcola la centralità di betweenness per ogni attore nel grafo. Gli attori con
+            un alto valore di centralità di betweenness sono quelli che si trovano in una posizione strategica nel
+            grafo, ovvero sono connessi a molti altri attori e possono facilmente collaborare con loro. -> **nodo più
+            centrale se è in mezzo a più cammini minimi**"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: a5904f6e8ef44b1ab8181f7fe77230de
+          blockGroup: 2809d060305d426495215765e872a634
+          sortingKey: "000092"
+          type: code
+          content: >-
+            betweenness_c = nx.betweenness_centrality(B_proj)
+
+            node_b_centr = list(betweenness_c.items())
+
+            node_b_centr.sort(key=lambda x: x[1], reverse=True)
+
+            node_b_centr[:10]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 3d37b85992464343ab47bac32179b3b0
+          blockGroup: 7ad2f2e4e57c4c4baab3eb8319a9ef1f
+          sortingKey: "000093"
+          type: markdown
+          content: "- **eigenvector centrality**: un attore è più centrale tanto più i nodi suoi vicini sono centrali"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 4e1fafeaf8d0448aa452f27ff9cfdd75
+          blockGroup: 12106f74d1ab438d9717bb2531312775
+          sortingKey: "000094"
+          type: code
+          content: >-
+            eigenvector_c = nx.eigenvector_centrality(B_proj)
+
+            node_e_centr = list(eigenvector_c.items())
+
+            node_e_centr.sort(key=lambda x: x[1], reverse=True)
+
+            node_e_centr[:10]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 6ee9d9cd309c4cab8cbf8c8519700fbe
+          blockGroup: f9168ec395ad422da904a8e9e531cf1e
+          sortingKey: "000095"
+          type: markdown
+          content: >-
+            **Kendall correlation** individua quali misure identificano gli stessi hubs
+
+            - abbiamo maggior correlazione tra la **degree** e **eigenvector centrality** -> Un'alta correlazione
+            suggerisce che i nodi con molti collegamenti diretti (alto degree) tendono ad essere anche vicini agli altri
+            nodi del grafo
+
+            - e pure tra **degree e closeness centrality** -> Un'alta correlazione indica che i nodi con molti
+            collegamenti diretti sono anche molto influenti, probabilmente perché collegati a nodi che sono anch'essi
+            influenti.
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 2544d58e981f4acca6b6befcd33a2ee8
+          blockGroup: cb14b4fd6a35429298682f6eb154c3b1
+          sortingKey: "000096"
+          type: code
+          content: >-
+            all_centr = [degree_c, closeness_c, betweenness_c, eigenvector_c]
+
+            ranks = [[scipy.stats.weightedtau(list(c1.values()), list(c2.values()))[0] for c1 in all_centr] for c2 in
+            all_centr]
+
+            centralities = ['degree', 'closeness','betweenness','eigenvector']
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 9843bada2a5649f4b184a0c02ae219e3
+          blockGroup: 5080536a5181478b864c5ad41a7dfc1c
+          sortingKey: "000097"
+          type: code
+          content: >-
+            plt.figure(figsize = (10,5))
+
+            sns.heatmap(pd.DataFrame(ranks),annot = True,cmap = 'coolwarm')
+
+            plt.xticks([x+0.5 for x in range(4)],centralities, rotation = 0)
+
+            plt.yticks([x+0.5 for x in range(4)],centralities, rotation = 0)
+
+            plt.title('(weighted) kendall correlation\n', weight = 'bold')
+
+            plt.show()
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 4acdaef7d63c43509af0ea9fe68b2458
+          blockGroup: b80294b73fb04ff68a521e1a3baccfcf
+          sortingKey: "000098"
+          type: markdown
+          content: >-
+            **7 attori più centrali sia per degree che per eigenvector centrality**
+
+            - {'1892', '192', '2231', '2395', '287', '31', '5293'}
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 09d4eb7945c7472e9f8aee174cc27858
+          blockGroup: f36a24fca4d2456b847cbb5b016c76a6
+          sortingKey: "000099"
+          type: code
+          content: >-
+            nodi_degree = set([x[0] for x in nodo_d_centr[:10]])
+
+            nodi_eg = set([x[0] for x in node_e_centr[:10]])
+
+            #['2231', '5293', '1892', '192', '3896', '31', '2395', '287', '2963', '4038']
+
+            #['2231', '31', '1892', '192', '287', '3392', '5293', '4785', '2395', '3']
+
+            nodi_clos = set([x[0] for x in node_c_centr[:10]])
+
+            print(nodi_degree.intersection(nodi_eg))
+
+            print(nodi_degree.intersection(nodi_clos))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 7668b27e852f4bf78cfd4ca5ce9b8acd
+          blockGroup: 1dd0218a3e2f47239ec88c38fcbf1910
+          sortingKey: "000100"
+          type: text-cell-h2
+          content: Connettività
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 8469d55a34c442409d8204e94b6458c3
+          blockGroup: f64646cb1b6841e8bfea390d2c5b2637
+          sortingKey: "000101"
+          type: text-cell-p
+          content: Il grafo di collaborazione tra attori **non è un grafo connesso**
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 65
+                fromCodePoint: 38
+        - id: 084020251c6f44ef9fd34177cd4b12bf
+          blockGroup: be7a9c7f1399409c8ab026c53d75dbd4
+          sortingKey: "000102"
+          type: code
+          content: nx.is_connected(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 12c5547d8faa4988aa87c4f7a0b49ef6
+          blockGroup: 9065504a823948bbbebd7a59e2fec773
+          sortingKey: "000103"
+          type: text-cell-p
+          content: Ha 5 componenti connesse
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 24
+                fromCodePoint: 2
+        - id: 7b2ba7fc90cb49cfab377faf34dc2e56
+          blockGroup: 4a9e999d80fb42d2a0a1ff6b8621de8b
+          sortingKey: "000104"
+          type: code
+          content: nx.number_connected_components(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: c252c564a8564cd8b3ccf1adc08c4ea9
+          blockGroup: afc799d7843240a582a976f8e576ca1b
+          sortingKey: "000105"
+          type: text-cell-p
+          content: Lunghezza di ogni componente connessa. La più grande componente connessa è composta da 894 nodi
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 73
+                fromCodePoint: 46
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 95
+                fromCodePoint: 87
+        - id: d2abcd06d83b4580b560459378336335
+          blockGroup: 8f5310c5acba46979dac1c9f775e4e82
+          sortingKey: "000106"
+          type: code
+          content: sorted([len(c) for c in nx.connected_components(B_proj)], reverse=True)[:10]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 2398d10148244c209ec61047970bd8f6
+          blockGroup: 512fb82bc06740f48ad1a3cd4b8e7b00
+          sortingKey: "000107"
+          type: markdown
+          content: "### Aggiunta di attributi per il grafo"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: bd14433a54c445c1a9b63a1837eb5aaf
+          blockGroup: 3ae81d37196a4d259cb4476203f9a0d9
+          sortingKey: "000108"
+          type: code
+          content: "attribute_component = {}
+
+            for i, component in enumerate(nx.connected_components(B_proj)):
+
+            \    for node in component:
+
+            \        attribute_component[node] = i #key=nodo value=indice componente a cui appartiene
+
+            \        "
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 8b1138eed1544f368ee9656081fac9b5
+          blockGroup: 271c8b4c83074b2b9cc2b3196b0f523b
+          sortingKey: "000109"
+          type: code
+          content: nx.set_node_attributes(B_proj, attribute_component, 'component')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 86bedabd04d34e1997f8b745a9554189
+          blockGroup: da373ba228dd4ffdb91f64577a06f511
+          sortingKey: "000110"
+          type: code
+          content: nx.write_gexf(B_proj, 'data/network_component.gexf')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: e2cc2da105cb45b59bd1b540d3fc1c37
+          blockGroup: d5e31bc2db5744b094887cf9919ceb90
+          sortingKey: "000111"
+          type: text-cell-h2
+          content: Transitività
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a484bc606aea45dfa6e174c979c4c742
+          blockGroup: 1de90376f5cd49b282ced6f720c0c101
+          sortingKey: "000112"
+          type: markdown
+          content: Non c'è molta propensione a chiudere le relazioni tra attori, in triangoli.
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 1181f02dc57046d1b3c586cf198bbb1b
+          blockGroup: 0d148a21f0e6473db8b52509028a7c7f
+          sortingKey: "000113"
+          type: code
+          content: nx.transitivity(B_proj), nx.average_clustering(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: a94b700ef0ae4e438795fd2baabad05f
+          blockGroup: da28f3eccdb943dba600050f79876474
+          sortingKey: "000114"
+          type: text-cell-h3
+          content: Bridges
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: c61ff3ed64fe447fb6dddde9018eee90
+          blockGroup: 29c95fbce11342cabcba5b35d5ac8591
+          sortingKey: "000115"
+          type: code
+          content: >-
+            #bridges il grafo ha dei bridge, ossia dei link che se tolti dalla rete aumentano il numero di componenti
+            connesse
+
+            nx.has_bridges(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: af5adce41051443e87e31bd6227cee85
+          blockGroup: 4393ca6089d34fa4b9fb745258f40a51
+          sortingKey: "000116"
+          type: text-cell-p
+          content: 26 link sono dei possibili bridges, se rimossi aumentano le componenti connesse
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 34
+                fromCodePoint: 0
+        - id: 721e75544d03445e8eefd1fdca29a130
+          blockGroup: 91c53bfe86c04a8daa0ffb6b464bf572
+          sortingKey: "000117"
+          type: code
+          content: list(nx.bridges(B_proj, root=None))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 476f669c86c34baeb92118c3c20e2143
+          blockGroup: 8619ad710a6e4ed0b36e4621ad21bbe3
+          sortingKey: "000118"
+          type: text-cell-h2
+          content: Assortatività
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 8b65d0d4112e48ff87c828b27512a30d
+          blockGroup: 4ca8c959816f4869bb29103ae95e9608
+          sortingKey: "000119"
+          type: code
+          content: >-
+            B_proj = nx.read_gexf('data/network_louvain.gexf')
+
+            print(B_proj) 
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: adcfb1a28d244bd7b8b0fb85fd12cd9a
+          blockGroup: 31079e0cf73446a2a0398ffc04b7026e
+          sortingKey: "000120"
+          type: text-cell-h3
+          content: "Assortatività per degree:"
+          metadata:
+            deepnote_app_block_visible: true
+            is_collapsed: false
+            formattedRanges: []
+        - id: faa594392a72481d8e72e02c65089315
+          blockGroup: 7d2df0f348f345b58acb31ba971c8895
+          sortingKey: "000121"
+          type: code
+          content: nx.degree_assortativity_coefficient(B_proj)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 5cab59be35964e148fc687dcf9eced3f
+          blockGroup: 8239bd0fcb214f73a5ad950c268e4198
+          sortingKey: "000122"
+          type: code
+          content: >-
+            attori = [] #[lista di id degli attori]
+
+            for nodi in B_proj.nodes:
+                attori.append(nodi) #918 attori
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 620ee4d164954c368d9d39d9c7b40a92
+          blockGroup: dcefa751149f41a0b4972f3dd4a7158e
+          sortingKey: "000123"
+          type: code
+          content: >-
+            def get_movie_genres(movie_id):
+                response = httpx.get(f"https://api.themoviedb.org/3/movie/{movie_id}?language=en-US&api_key={api_key}").json()
+                return [genre['name'] for genre in response.get('genres', [])]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+            is_code_hidden: true
+        - id: 085094d358d24c3aa3ddbddccfad1502
+          blockGroup: 16302f4c546148eab59396df9d168b0b
+          sortingKey: "000124"
+          type: code
+          content: >-
+            def get_actor_films(actor_id):
+                response = httpx.get(f"https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={api_key}").json()
+                return [movie['id'] for movie in response.get('cast', [])] #array di id_films
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 8e2bafa8185a4c51afe49626f16cef61
+          blockGroup: 3833cfcabc114dac92843fc5f6912e68
+          sortingKey: "000125"
+          type: code
+          content: >
+            attore_films = dict()
+
+            #key = attore, value = [id films]
+
+
+            for actor_id in attori:
+                movies = get_actor_films(actor_id)
+                attore_films[actor_id] = movies
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: af1bf335dc014b8d8419e2ee01cad70b
+          blockGroup: f727097f1cf14a669e7b865c8ade107a
+          sortingKey: "000126"
+          type: code
+          content: json.dump(attore_films, open('data/dict_attore_films.json', 'w'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: d80ba12f8ab14e5c83825ee5b4df1012
+          blockGroup: e52ab25ae06b45668286da102f1647f2
+          sortingKey: "000127"
+          type: code
+          content: >-
+            films_ids = []
+
+            for attore, films in attore_films.items():
+                films_ids.extend(films)
+            len(films_ids) #films in totale di tutti gli attori: 52017
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 764b46e566aa44eb94a6f2cfca698bc5
+          blockGroup: 9dd04e05d98b4f6289580b5841586ddd
+          sortingKey: "000128"
+          type: code
+          content: >-
+            films_ids = set(films_ids)
+
+            len(films_ids) #32554 films senza doppioni
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 63fd49cd375a4e7691b110cf34f19c45
+          blockGroup: b10e276dbcf544b495086e5bc6403589
+          sortingKey: "000129"
+          type: code
+          content: "#films_ids # set di ID_FILMS = {720897, 327683, 851972, 5, 6, ...}"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 1e55052d3ed94631a8225e6d5fff2c9b
+          blockGroup: 10d5ee8d298c4ae1b0de3731c250c39e
+          sortingKey: "000130"
+          type: code
+          content: >-
+            film_generi = dict()
+
+            film_date = dict()
+
+
+            for film_id in films_ids:
+                generi_names = []
+                url = f"https://api.themoviedb.org/3/movie/{film_id}?language=en-US&api_key={api_key}"
+
+                headers = {
+                    "accept": "application/json",
+                    "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4NDUxMWQwNmYyNTEyNTRkODU4ZjcwOWZlN2FlYjMyYiIsInN1YiI6IjYwYzIzOGU2ZDg2MWFmMDAyOTM5YmRlOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.MIgCo78urrNeoR8Ag0q2DOvrnUWHArlmXQ-4IxZ6I5A"
+                }
+
+                response = requests.get(url, headers=headers).json()
+                #response = httpx.get(f"https://api.themoviedb.org/3/movie/{film_id}?language=en-US&api_key={api_key}").json()
+                for generi in response.get('genres', []):
+                    generi_names.append(generi['name'])
+
+                film_generi[film_id] = generi_names
+                print(film_id)
+                film_date[film_id] = response.get('release_date', [])
+
+                
+            #tempo di load: 30 minuti
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+            is_code_hidden: false
+            is_output_hidden: true
+        - id: c23ea3e87879441b9f3aad5c7b1233fb
+          blockGroup: a26ad6d7c2e2487facd795160edfe71b
+          sortingKey: "000131"
+          type: code
+          content: "json.dump(film_date,open('data/film_date.json', 'w')) #{720897: '1992-03-04', 327683: '1992-02-28', 1048586:
+            '', ecc.}"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 46bf10bb9093423086351661cb64cc62
+          blockGroup: e8194bc8882f477b98d28b3a3501fcbd
+          sortingKey: "000132"
+          type: code
+          content: "json.dump(film_generi, open('data/film_generi.json', 'w')) #{ 5 : ['Comedy'], 6: ['Action', 'Crime',
+            'Thriller'], ecc.}"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 35e6a8cc8aac4477a2cf27aab56de95a
+          blockGroup: a1729e439e1946219c6b601fed333548
+          sortingKey: "000133"
+          type: code
+          content: >-
+            attore_films = json.load(open('data/dict_attore_films.json'))
+
+            film_date = json.load(open('data/film_date.json'))
+
+            film_generi = json.load(open('data/film_generi.json'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 95e8dddbab8f4f949c0a6818c285b349
+          blockGroup: 998ade31447843b8b8221cb1ff980727
+          sortingKey: "000134"
+          type: code
+          content: >-
+            print(attore_films['12799'])
+
+            print(film_generi.get('6'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: ffa5bc8838404991a48bc1ed943439ef
+          blockGroup: 0b24b63d901148fab0a1413bfdc0810a
+          sortingKey: "000135"
+          type: code
+          content: >
+            attore_generi = dict()  #attore generi = { id_movie : [ generi : count ] }
+
+
+            for actor, movies in attore_films.items(): #attore_films => key=id_attore, value=[id_film]
+                generi = []
+                generi_count = dict()
+                for movie in movies:
+                    movie = str(movie)
+                    if film_generi[movie] or film_generi[movie] == []: #se film non ha alcun genere assegnato
+                        generi.extend(film_generi[movie])
+                    else:
+                        print(f'film {movie} non trovato')
+                for genere in generi:
+                    #for genere in lista_generi:
+                    if generi_count.get(genere):
+                        generi_count[genere] += 1
+                    else:
+                        generi_count[genere] = 1
+                attore_generi[actor] =  generi_count
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: c94895dded87404390e058ab2707be3d
+          blockGroup: 7b37dbbbf20a4c2d901f13068496b2ad
+          sortingKey: "000136"
+          type: text-cell-h3
+          content: Genere più ricorrente di ogni attore
+          metadata:
+            deepnote_app_block_visible: true
+            is_collapsed: false
+            formattedRanges: []
+        - id: 7ff30e023ec54157aa57aefeefa89d5f
+          blockGroup: 4ddf2d60a00a43428a6468b39ed2cd7b
+          sortingKey: "000137"
+          type: text-cell-p
+          content: Assortatività per genere cinematografico nella rete. Ma prima scelgo il genere che identifica di più ogni
+            attore, così da aggiungerlo come attributo al nodo.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a00471df1a3e4e7fb9206a235e178ceb
+          blockGroup: 83f10fbf68cb4e24b5645bb3ad394507
+          sortingKey: "000138"
+          type: text-cell-bullet
+          content: "attore_generi: dizionario di lunghezza totale 918 (attori presenti nel grafo) -> creare un dizionario {attore
+            : unico_genere}"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 13
+                fromCodePoint: 0
+        - id: 5aa50c7971c24f50b0dc1038792c701c
+          blockGroup: 78e0593c18b8422cacadcbe5763ddb36
+          sortingKey: "000139"
+          type: code
+          content: >-
+            json.dump(attore_generi, open('data/dict_attore_generi.json', 'w'))  #918 { attore : { genere : count },
+            ecc. }
+
+            # {'12799': {'Action': 18,
+
+            #   'Crime': 18,
+
+            #   'Thriller': 17,
+
+            #   'War': 2,
+
+            #   'History': 3, ecc. }, ecc.}
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 96dae1995a084b739fd88f6041c21029
+          blockGroup: 9ea297af9b6b4638a7e4f46bf1004169
+          sortingKey: "000140"
+          type: code
+          content: attore_generi = json.load(open('data/dict_attore_generi.json'))
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: d6f3b0013b3445cc9da213e4c9ee04d2
+          blockGroup: 28b4b5f5feb342d393229850113acf0b
+          sortingKey: "000141"
+          type: code
+          content: >-
+            generi_count = dict()
+
+
+            for generi in attore_generi.values():
+                for genere in generi:
+                    if generi_count.get(genere):
+                        generi_count[genere] += 1
+                    else:
+                        generi_count[genere] = 1
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+            is_code_hidden: true
+        - id: 5a8f37946cf3422aba746c08b25aba71
+          blockGroup: 3c09e9cb7cf448c3b57f64efc9de463b
+          sortingKey: "000142"
+          type: code
+          content: >-
+            attore_generi_ordinati = dict()
+
+            for attore, generi_count in attore_generi.items():
+                generi_conteggio = sorted(generi_count.items(), key=lambda x: x[1], reverse=True) 
+                attore_generi_ordinati[attore] = generi_conteggio#[0][0]
+            #generi_conteggio, generi_conteggio[0][0]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 0d3364da54da4295ac7f6aa0298d0c74
+          blockGroup: 7a088d0e99c4475a9e05a41d7ad41795
+          sortingKey: "000143"
+          type: code
+          content: "attore_generi_ordinati['12799'][0][0] #name genere più ricorrente"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: aca754b08ed248139033648ba40337a2
+          blockGroup: 5ad15e9e6aca4015a18e54424ebda350
+          sortingKey: "000144"
+          type: markdown
+          content: Definisco un dizionario di genere per ogni attore -> il genere_attribute è il genere più ricorrente del attore
+          metadata:
+            deepnote_app_block_visible: true
+        - id: cb470e2ca20a43cf967d7cf8b3136478
+          blockGroup: b9e449e4be544fddaed7b9195098a4dd
+          sortingKey: "000145"
+          type: code
+          content: >-
+            #dizionario per attribute del nodo
+
+            genere_attribute = dict()
+
+
+            for actor, generi_ordinati in attore_generi_ordinati.items():
+                #print(actor)
+                genere_attribute[actor] = generi_ordinati[0][0]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 786324d203a541fbaf6312756a834040
+          blockGroup: 51c7115828974b04a172e33ed7fa431c
+          sortingKey: "000146"
+          type: text-cell-h3
+          content: Aggiunta attributo 'genere cinematografico' ai nodi
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: cdad9e3340b848f08a2eb2615fe5873f
+          blockGroup: 8fab292eeaa147b593ca849ad78d3cdc
+          sortingKey: "000147"
+          type: code
+          content: nx.set_node_attributes(B_proj, genere_attribute, 'genere_cinematografico')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: d7295a49a30a4b14b8bef63820ff95b9
+          blockGroup: bde495af11654c3fb1717ab79922caf0
+          sortingKey: "000148"
+          type: code
+          content: nx.write_gexf(B_proj, 'data/graph_assortativity.gexf')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: c55febd932ac463597a4009a204e4dca
+          blockGroup: 54df76e145ee43d592b77dcd1d8ba7c8
+          sortingKey: "000149"
+          type: text-cell-h3
+          content: "Assortatività per genere:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 93aab70a11024fffbf7c58df4b2a03a7
+          blockGroup: e32a0825455a4a6793acd983eb8b2cf1
+          sortingKey: "000150"
+          type: text-cell-p
+          content: Abbiamo un assortatività molto bassa -> la rete è poco assortativa
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 1580d19c603b406dbce9cbb52632b456
+          blockGroup: 5b146a4af9f74c4ca92c6f9e895e62b5
+          sortingKey: "000151"
+          type: text-cell-p
+          content: Vuol dire che gli attori tendono a collaborare con attori anche di altri generi cinematografici, non soltanto
+            al loro genere più ricorrente.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 288d226b8ae845a3a03c1fdb532b3a0d
+          blockGroup: 7aaba5beb51f471db0b82597ce0b5cdf
+          sortingKey: "000152"
+          type: code
+          content: nx.attribute_assortativity_coefficient(B_proj, 'genere_cinematografico')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: f98f88d93e6440c3a8a04aef370316a3
+          blockGroup: 6e068011d1674382a3bdb3e8ce985055
+          sortingKey: "000153"
+          type: code
+          content: >-
+            mapping = {g : i for i, g in enumerate(generi_film.values())}
+
+            MM_attribute = nx.attribute_mixing_matrix(B_proj, attribute='genere_cinematografico', nodes=None,
+            mapping=mapping, normalized=True)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 6a097a2b48844083af6b82e086ddba25
+          blockGroup: 42c8868be7494a66b0b7a4b61799f1fb
+          sortingKey: "000154"
+          type: code
+          content: >-
+            plt.figure(figsize=(25,10))
+
+            generi = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family',
+            'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'TV Movie', 'Thriller',
+            'War', 'Western']
+
+            sns.heatmap(pd.DataFrame(MM_attribute), annot=True, cmap='Reds')
+
+            plt.xticks([x+0.5 for x in range(len(generi))], generi, rotation=0)
+
+            plt.yticks([x+0.5 for x in range(len(generi))], generi, rotation=0)
+
+            plt.show()
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: f7d3b324aa6e4f6cadfb2df348708a8d
+          blockGroup: 6564a31686fd45dab5d29dbfb00d00e9
+          sortingKey: "000155"
+          type: markdown
+          content: >
+            ## Quali attori sono considerati i più versatili? 
+
+            Ossia attori che hanno recitato in una varietà di generi cinematografici diversi. Partendo dal dizionario
+            attore_generi, identifico gli attori che recitato in più generi e li considero i più versatili.
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 32923178e7d048f488aa8c7d46fb7747
+          blockGroup: 120f7c71f4fe4bb8a735d92f8c90a77f
+          sortingKey: "000156"
+          type: code
+          content: >-
+            attori_versatili = dict()
+
+            for attore, generi  in attore_generi.items():
+                #ordinamento per numero di generi
+                attori_versatili[attore] = len(generi)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: ec3d8cf37a314364b67a5ff6b6182d8f
+          blockGroup: 128b29932e4a45699ef0b8b52f401260
+          sortingKey: "000157"
+          type: text-cell-p
+          content: I primi 105 attori hanno recitato in almeno un film di ogni genere.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 6806f952bb1d43d4abfbf72423b14781
+          blockGroup: ea44d8f2401f49dd8b43f292f4c72b0a
+          sortingKey: "000158"
+          type: code
+          content: "top_105_attori_versatili = sorted(attori_versatili.items(), key=lambda x: x[1], reverse=True)[:105]"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 567978551e1e47499c1965855c0b6cf5
+          blockGroup: 1619bdb418a04fd3a340b25a155a2946
+          sortingKey: "000159"
+          type: text-cell-p
+          content: Ma qual è comunque il loro genere prevalente?
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 6dd19d1bc0e4487289efddfa03eb46bb
+          blockGroup: 8c35b679761d4017aa68a88ea566859b
+          sortingKey: "000160"
+          type: code
+          content: >-
+            for attore, _ in top_105_attori_versatili:
+                print(attore, attore_generi_ordinati[attore][0])
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 2f2a0e9443e34dbab2a93da5623a2d3e
+          blockGroup: cf84a0976b294d34a29b5b8e98fbdc25
+          sortingKey: "000161"
+          type: code
+          content: >-
+            actors_genres = []
+
+
+            for attore, _ in top_105_attori_versatili:
+                actors_genres.append(attore_generi_ordinati[attore])
+
+            len(actors_genres)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 6f0562e5160947db8e5f3a35debad63f
+          blockGroup: f24da3ed1ffd4f26a92e9d7b78328968
+          sortingKey: "000162"
+          type: text-cell-p
+          content: "Grafico per vedere come si distribuiscono i generi dei film dei primi 9  attori più versatili:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a4e934384195400b8473ff3b3636e4f4
+          blockGroup: c8ff396a7af548b5ab2c5c1e766a34f5
+          sortingKey: "000163"
+          type: code
+          content: >-
+            actors_genres = []
+
+
+            for attore, _ in top_105_attori_versatili[:9]:  #solo dei primi 9
+                actors_genres.append(attore_generi_ordinati[attore])
+
+            def calculate_genre_percentages(actor_genres):
+                total_movies = sum(count for genre, count in actor_genres)
+                genre_percentages = {genre: (count / total_movies) * 100 for genre, count in actor_genres}
+                return genre_percentages
+
+            # Creare grafici a torta per ciascun attore
+
+            for i, actor_genres in enumerate(actors_genres):
+                percentages = calculate_genre_percentages(actor_genres)
+                
+                # Dati per il grafico a torta
+                labels = percentages.keys()
+                sizes = percentages.values()
+                
+                # Creare il grafico a torta
+                plt.figure(figsize=(10, 8))
+                plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
+                plt.axis('equal')  # Assicurarsi che il grafico a torta sia disegnato come un cerchio
+                plt.title(f'Percentuali dei generi per Attore {i+1}')
+                plt.show()
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+            is_output_hidden: false
+        - id: 15d7122651ba4ce4a11beec4d5b63ae7
+          blockGroup: 821e8417a87047ea9dae38239fda0229
+          sortingKey: "000164"
+          type: markdown
+          content: >-
+            ## Quali sono gli attori che più collaborano fra di loro?
+
+            Ci sono diverse metriche per rispondere a questa domanda:
+
+            - Ricavo il numero di collaborazioni dal attributo __weight__ dei link 
+
+            - COmmunity detection: per identificare gruppi di attori che tendono a collaborare tra loro. **Identifica
+            cluster di attori che lavorano insieme frequentemente**
+          metadata:
+            deepnote_app_block_visible: true
+        - id: e69124d6e3654c2a9ec51f60cc213bbf
+          blockGroup: e665086c8f0b4af189c5d680644a104e
+          sortingKey: "000165"
+          type: markdown
+          content: >-
+            ### Community Detection
+
+            Utilizzo l'algoritmo di Louvain
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 78f27b1c44c4431c9ee5947e57281847
+          blockGroup: 4a691a228df54bd292a5853d06ec5f3f
+          sortingKey: "000166"
+          type: code
+          content: >-
+            import networkx.algorithms.community as nx_comm
+
+            from mycolorpy import colorlist as mcp
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: a6b4c02f0d3e4c5ba372b9e8652596e4
+          blockGroup: 5d3809c3611040dcbbbbee8afd0b2471
+          sortingKey: "000167"
+          type: code
+          content: "get_color_list = lambda ncolors, cmap : mcp.gen_color(cmap=cmap, n=ncolors)"
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 01a68fb61acb46f9a17ddf9bb76875aa
+          blockGroup: 7bd492fb8fbc4fe0922de73f77cb51ee
+          sortingKey: "000168"
+          type: code
+          content: >
+            partition_louvain = community_louvain.best_partition(B_proj)
+
+
+            comm_index = set(partition_louvain.values())
+
+            colors_louvain = {}
+
+            for comm, c in zip(comm_index, get_color_list(len(comm_index), 'Pastel1_r')):
+                colors_louvain[comm] = c
+
+            colors_for_node_louvain = {}
+
+            for node, c in partition_louvain.items():
+                colors_for_node_louvain[node] = colors_louvain[c]
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: f4837687e87d4549990825469c8d0dd3
+          blockGroup: c7e5b017dc9246e5b1e18c02145f385a
+          sortingKey: "000169"
+          type: code
+          content: >-
+            ###studio sulle community
+
+            B_proj = nx.read_gexf('data/network_louvain.gexf')
+          metadata:
+            deepnote_app_block_visible: true
+        - id: f85476833f5e487b895ce970aa409d96
+          blockGroup: a1805071d0234a63bb58c90c2e9c7401
+          sortingKey: "000170"
+          type: code
+          content: >-
+            ###
+
+            partition_louvain = dict()
+
+            for _, info in B_proj.nodes(data=True):
+                partition_louvain[info['label']] = info['community']
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 66d63c65ddd04bffa8da28afb7c7e09e
+          blockGroup: 3e337f4e738b46e9b1f62578301ea78c
+          sortingKey: "000171"
+          type: code
+          content: partition_louvain
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: e5501a2ea6e34a9aaeb5e1f0aa1623fd
+          blockGroup: 2748271273f64560920bffc27218ebae
+          sortingKey: "000172"
+          type: code
+          content: >-
+            comms = defaultdict(set)
+
+            for n, c in partition_louvain.items(): #nodo, community
+                comms[c].add(n)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 26c1b3630f7c45918e98e3900a97a240
+          blockGroup: aae8c2d3e1474756b97893db30029d3d
+          sortingKey: "000173"
+          type: code
+          content: >-
+            comm_len = []
+
+            for c, nodes in comms.items():
+                comm_len.append((c,len(nodes))) #(id_community, num nodi)
+            comm_len.sort(key=lambda x: x[1], reverse=True)
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: a475b2bce22e411cace824cf2ad36c35
+          blockGroup: 0f187465c0ad4aa7bdff269ecfc9d02c
+          sortingKey: "000174"
+          type: text-cell-p
+          content: Sono state trovate 13 comunità
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 30
+                fromCodePoint: 19
+        - id: bf9d3ddb284c4d918cfc637233f08125
+          blockGroup: 41e74ebbc77e4ada88ed68961a8972d9
+          sortingKey: "000175"
+          type: code
+          content: comm_len
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 57bac3cef5534d4683cc331242de3793
+          blockGroup: e4d766acf983491a8c8c1533aaa22314
+          sortingKey: "000176"
+          type: text-cell-h3
+          content: Assortatività per genere di ogni community
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 0fd0b85874cd43509f5d02ef03bebaf8
+          blockGroup: bfee28da305e4e238b53b09b4703cdc9
+          sortingKey: "000177"
+          type: code
+          content: attore_generi = json.load(open('data/dict_attore_generi.json'))
+          metadata:
+            deepnote_app_block_visible: true
+        - id: cbea8583c1c345329b8cec4f9cbec059
+          blockGroup: 94a1661eb70545f8a257a384552ddf66
+          sortingKey: "000178"
+          type: code
+          content: attore_generi['1100']
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 4097ba228dc34e1c89d3e64f7418c1b6
+          blockGroup: 677e0563d727407fa93261aa6103beda
+          sortingKey: "000179"
+          type: code
+          content: >-
+            for comm in comms:
+                Sottografo = nx.subgraph(B_proj, comms[comm])
+                print("Community: ", comm, " ->", nx.attribute_assortativity_coefficient(Sottografo, 'genere_cinematografico'))
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 80de8afb6dc44c2295f3781ef7565b48
+          blockGroup: 787316e9785441b6a679e2a0f38b4a0e
+          sortingKey: "000180"
+          type: text-cell-p
+          content: "A supporto del calcolo dell'assortatività di ogni community, filtro per genere cinematografico ogni attore, in
+            gephi. "
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 890277a651cc48108e1b41192bbcb6b6
+          blockGroup: 462c7a98a671457b9ff311fd97cc38bc
+          sortingKey: "000181"
+          type: code
+          content: >-
+            cov, perf = nx.algorithms.community.partition_quality(B_proj, comms.values())
+
+            cov, perf
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: 01e2008245b948d89b486623c32e8bfc
+          blockGroup: 72f36425fc934c299bb8712c61b6077c
+          sortingKey: "000182"
+          type: code
+          content: >-
+            nx.set_node_attributes(B_proj, partition_louvain, 'community-louvain')
+
+
+            nx.write_gexf(B_proj, 'data/network_louvain.gexf')
+          metadata:
+            deepnote_app_is_code_hidden: false
+            deepnote_app_is_output_hidden: false
+            deepnote_app_block_visible: true
+        - id: ff9b55128d194f969678bbf84b69c15a
+          blockGroup: 19e2710cac4b4465b949ad31028fbbb2
+          sortingKey: "000183"
+          type: text-cell-h2
+          content: Link prediction
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 6acaf999d9174be6833f1c69cfc6ecaf
+          blockGroup: 950de9d36ab244dc908b4adad51fd344
+          sortingKey: "000184"
+          type: code
+          content: >
+            from datetime import datetime
+
+            # Data preprocessing and trasformation (ETL)
+
+            from sklearn.experimental import enable_iterative_imputer
+
+            from sklearn.impute import SimpleImputer, IterativeImputer
+
+            from sklearn.base import BaseEstimator, TransformerMixin
+
+            from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, MaxAbsScaler,
+            FunctionTransformer, Binarizer, OneHotEncoder, OrdinalEncoder
+
+            from sklearn.pipeline import Pipeline
+
+            from sklearn.compose import ColumnTransformer
+
+            from sklearn.datasets import fetch_openml, load_iris, make_moons, make_classification
+
+
+            # Math and Stat modules
+
+            from scipy.stats import sem
+
+            from random import choice
+
+
+            # Supervised Learning
+
+            from sklearn.model_selection import train_test_split, cross_val_score, cross_val_predict, KFold,
+            StratifiedKFold, RepeatedKFold, ShuffleSplit, StratifiedShuffleSplit, learning_curve, validation_curve
+
+            from sklearn.linear_model import Perceptron, LogisticRegression
+
+            from sklearn.base import BaseEstimator
+
+            from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score,
+            precision_recall_curve, roc_curve, accuracy_score, ConfusionMatrixDisplay
+
+            from sklearn.dummy import DummyClassifier
+
+            from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier
+
+            from sklearn.ensemble import RandomForestClassifier
+
+
+            import matplotlib as mpl
+
+            %matplotlib inline
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 2903a7017e954d5691a87cd4eebdbf8f
+          blockGroup: c5162641f22c457aa4ab43655ebc82d8
+          sortingKey: "000185"
+          type: text-cell-p
+          content: Voglio predire la probabilità di una futura collaborazione tra due attori, dato che al momento della predizione
+            quei due nodi non sono connessi.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 323100a3b530415588808ac15a6b067b
+          blockGroup: c195011da13848fcb523f3b262e0e253
+          sortingKey: "000186"
+          type: code
+          content: >-
+            B_proj = nx.read_gexf("data/network_louvain.gexf")
+
+            B_proj.number_of_edges()
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 7bde1cfe6b8842d4aafdf4667a25e099
+          blockGroup: 31f04355f18b4bd09165c20f30be2814
+          sortingKey: "000187"
+          type: text-cell-p
+          content: Trovo la data che determina il periodo di creazione del link (collaborazione) tra due attori, e lo aggiungo
+            come attributo ai link.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 858c3b85d7a749c48a9550910d7942d5
+          blockGroup: cca9b1612ee04f57bc05595e0385a6d9
+          sortingKey: "000188"
+          type: code
+          content: >-
+            attore_film = json.load(open("data/dict_attore_films.json"))
+
+            #attore_film #{'12799': [6,855,949,10029,
+
+            film_date = json.load(open("data/film_date.json"))
+          metadata:
+            deepnote_app_block_visible: true
+        - id: f9508fd468134efda88dcc869299199d
+          blockGroup: 228a26f3fe92498aa1bc344391f1c94c
+          sortingKey: "000189"
+          type: code
+          content: >-
+            prova = list(set(attore_film['125025']).intersection(set(attore_film['29222'])))
+
+            #prova = ['2020-10-15', '2020-03-01','1998-05-10', '']
+
+            #sorted(prova)
+
+            date = []
+
+            for film in prova:
+                if film_date[str(film)] != '':
+                    date.append(film_date[str(film)])
+
+            date
+          metadata:
+            deepnote_app_is_code_hidden: true
+            deepnote_app_block_visible: true
+            is_code_hidden: true
+        - id: c24b0f90d456446da81b3656fa1585fb
+          blockGroup: 54a8404de785445f834fff2891d38271
+          sortingKey: "000190"
+          type: code
+          content: "link_film_in_comune = dict()
+
+            for source, target, info in B_proj.edges(data=True): #link[0] = source, link[1] = target, link[2] =
+            attributes['id']  e ['weight']
+
+            \    #print(link[0], link[1])69122 8183
+
+            \    link = tuple((source, target))
+
+            \    film_common = list(set(attore_film[source]).intersection(set(attore_film[target])))
+
+            \    data_rilascio = list()
+
+            \  \ 
+
+            \    for film in film_common:
+
+            \        if film_date[str(film)] != '':
+
+            \            data_rilascio.append(film_date[str(film)])
+
+            \    if len(data_rilascio) == 0:
+
+            \        data_rilascio.append('1998-01-01')
+
+            \    link_film_in_comune[link] = datetime.strptime(sorted(data_rilascio)[0], '%Y-%m-%d')\ 
+
+            \    "
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 0efa0e641eb648e5aa569dcfe941835d
+          blockGroup: 9d150ebb350545b6aa6f5dbe44619140
+          sortingKey: "000191"
+          type: text-cell-h3
+          content: Aggiunta time-stamp ad ogni arco del grafo
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 2ee14e365b4b4333bb3605378a9cd6e2
+          blockGroup: d6dbcdee20844558875927a2c45282a2
+          sortingKey: "000192"
+          type: code
+          content: >-
+            #json.dump(link_film_in_comune, open('data/link_attr_data_rilascio.json', 'w'))
+
+            for link, attributo in link_film_in_comune.items():
+                B_proj[link[0]][link[1]]['time'] = attributo
+          metadata:
+            deepnote_app_block_visible: true
+        - id: f6de89de39d14fa59f53078ec6375046
+          blockGroup: 204ee1f64bbd4b659e6a6842dcae5313
+          sortingKey: "000193"
+          type: text-cell-p
+          content: "Ora che abbiamo i dati necessari analizziamo la distribuzione delle date, così da determinare una data
+            (soglia) per dividere i miei dati per il train e test della predizione. Ho 29.242 link di cui date
+            distribuite in questa maniera: "
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 190
+                fromCodePoint: 178
+        - id: 51b5785607a04806a10d50b483d5f7aa
+          blockGroup: ca59d95cc101466eaa0cc2208b4bd279
+          sortingKey: "000194"
+          type: code
+          content: >-
+            distribuzione_date = Counter([info['time'].year for _, _, info in B_proj.edges(data=True)])
+
+            sorted(distribuzione_date.items(), key=lambda item: item[0]) 
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 47526319dd9f4d7aa4383b5d05142959
+          blockGroup: df5dc57ccb904179b63fa120e96a200a
+          sortingKey: "000195"
+          type: code
+          content: >-
+            data_soglia = datetime(2016,1,1) #2013,1,1
+
+            data_soglia_finale = datetime(2022,1,1) #2019,1,1
+          metadata:
+            deepnote_app_block_visible: true
+        - id: dffdd03a773846bd859d2628c5d22f61
+          blockGroup: 90495062423f402eaf2c6da5b01de3ec
+          sortingKey: "000196"
+          type: code
+          content: >-
+            g_training, g_testing = nx.Graph(), nx.Graph()
+
+            for u, v, info in B_proj.edges(data=True):
+                if info['time'] < data_soglia:
+                    g_training.add_edge(u, v)
+                elif info['time'] < data_soglia_finale:
+                    g_testing.add_edge(u, v)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: b2974ccfb9ff4acc98e73a8dda1a20b0
+          blockGroup: ea936076e1ba4b7cbcc2cb05fc630142
+          sortingKey: "000197"
+          type: text-cell-p
+          content: "Dimensione dei grafi del:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 997b25fc306a4843a9fd80cda000b287
+          blockGroup: bae1c35cfa5242739e7200b0aa0df4ed
+          sortingKey: "000198"
+          type: text-cell-bullet
+          content: "G_1 test: 5539"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 60e5ebb4f0b24566976032c5da8e00ed
+          blockGroup: 40f302bb91eb4e31979d78eaa6a03fdb
+          sortingKey: "000199"
+          type: text-cell-bullet
+          content: "G_0 train: 21743"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 0de4e02157254ee691a76d9c4fca9dcd
+          blockGroup: e78403538ee6459f8149e7eba229c0fa
+          sortingKey: "000200"
+          type: code
+          content: g_testing.size(), g_training.size()
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 1d48295873644b6b85d4fc38c1b65cb1
+          blockGroup: bcc725f106de4c43b584e9abac56ddbc
+          sortingKey: "000201"
+          type: text-cell-h3
+          content: Costruzione datapoint
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a5b76e06c0ba4d99bf07345c84738f51
+          blockGroup: 5368c947aa7446289da956ea39489424
+          sortingKey: "000202"
+          type: text-cell-p
+          content: Identifico quali sono i datapoint da cui estrarre delle feature o caratteristiche.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 716bc052e9844ea387db050802b3ca92
+          blockGroup: 6cfb924c7462407186394b14a09dd2aa
+          sortingKey: "000203"
+          type: text-cell-p
+          content: Nel mio caso le istanze oggetto della classificazione sono le coppie di nodi u, v appartenenti al grafo G_0
+            (training)
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 53200dbe1a4d4aa8a79afefd421052e2
+          blockGroup: e73f6d315a0446afbd94eef7dfada7e0
+          sortingKey: "000204"
+          type: text-cell-bullet
+          content: considero solo le coppie di G_0 che sono comprese in G_1
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 9e140c02881646df9a72a8cc5b9ad100
+          blockGroup: cd7f71ac7eab4e1591995b91ff6a95d2
+          sortingKey: "000205"
+          type: text-cell-bullet
+          content: a queste coppie associo l'etichetta 0 -> se in G_1 (testing) non si è formata una relazione tra loro
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 5b7cac317f6d4c45aab6f3fc57927a47
+          blockGroup: 18eac3133728426c8eb244d89f3a049d
+          sortingKey: "000206"
+          type: text-cell-bullet
+          content: altrimenti associo l'etichetta 1 -> se in G_1 si è formata la relazione
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 39f159f046d94b83bf399e88cdf2974b
+          blockGroup: 9c115bf610a340e2847f010d97dba0b9
+          sortingKey: "000207"
+          type: code
+          content: >-
+            list_edges = np.array([{u,v} for u,v in g_testing.edges()])
+
+            len(list_edges)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: ce47ab332d0d41619318dc2332f965d0
+          blockGroup: d1b5450b094842e08650ff3edb1e2011
+          sortingKey: "000208"
+          type: text-cell-h3
+          content: Datapoints positivi - label 1
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 16c927110ad14406b4408e856cb3ec83
+          blockGroup: cae99018865d4de4b7f2c2b32ef4d432
+          sortingKey: "000209"
+          type: code
+          content: positive_datapoints = np.random.choice(list_edges, replace = False, size = 570)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: f24ccb8157fe44d48c2a46b0e6f91faf
+          blockGroup: 3793209e04e44a6a9489d22c04c96672
+          sortingKey: "000210"
+          type: code
+          content: positive_datapoints = [(u,v) for u,v in positive_datapoints if g_training.has_node(u) and
+            g_training.has_node(v)]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 37f945fffac04352b78f20056d9356fb
+          blockGroup: 7c612c93c47248788d2ee35f609099b1
+          sortingKey: "000211"
+          type: text-cell-p
+          content: "Ottengo: 541 positive_datapoints"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 32
+                fromCodePoint: 9
+        - id: f7d292da46eb4caba1a430d1893b701d
+          blockGroup: 8b3e0a8410994e918c957e519227c9af
+          sortingKey: "000212"
+          type: code
+          content: len(positive_datapoints)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: ff2a8e1f3e56496baf11879407ace61b
+          blockGroup: c5f29668ea584d92b91eb4bc92f987b8
+          sortingKey: "000213"
+          type: text-cell-h3
+          content: Datapoints negativi - label 0
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 3eb60ea0a1fe4a2e8a004ad594cd09e3
+          blockGroup: ad39dce1c91c4ec7bfc9606b0d4bf24d
+          sortingKey: "000214"
+          type: text-cell-p
+          content: "Devo ottenere un numero di coppie uguale al numero di coppie dei positive_datapoints:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 7bf3a7e2da7e486e98076fa93b31d410
+          blockGroup: 628c477d32c1481089a4c3fb32d50a14
+          sortingKey: "000215"
+          type: code
+          content: >-
+            negative_datapoints = []
+
+            nodes_set = list(g_testing.nodes())
+
+            count = 0
+
+            while count < len(positive_datapoints):
+                u, v = np.random.choice(nodes_set, replace=False, size = 2)
+                if (not g_testing.has_edge(u,v) and g_training.has_node(u) and g_training.has_node(v) and not g_training.has_edge(u,v)):
+                    negative_datapoints.append((u,v))
+                    count += 1
+          metadata:
+            deepnote_app_block_visible: true
+        - id: cbd548b6a7fd426da5fe11cfe9d888c4
+          blockGroup: 6f8e5be72de24735a314956b1e246cc1
+          sortingKey: "000216"
+          type: text-cell-p
+          content: "Ottengo: 541 negative_datapoints"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges:
+              - type: marks
+                marks:
+                  bold: true
+                toCodePoint: 32
+                fromCodePoint: 9
+        - id: b55582c0bea8489b83848a10aad25edf
+          blockGroup: bf971d2abdff480bb733363e39718c00
+          sortingKey: "000217"
+          type: code
+          content: len(negative_datapoints)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 37ea4d796f83475893dae1db3bde095d
+          blockGroup: 11058cc488fb4573bf5e56417e803398
+          sortingKey: "000218"
+          type: text-cell-p
+          content: "Trasformo ogni coppia di nodi in un vettore:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 907f4c9ff4b44448a2821aaee3f1f63d
+          blockGroup: e1fb6015bad44d0d8801159d7cdad650
+          sortingKey: "000219"
+          type: code
+          content: dataset_link_prediction = pd.DataFrame()
+          metadata:
+            deepnote_app_block_visible: true
+        - id: fa177fc96c214563a9b0933538edb86d
+          blockGroup: 01badf3e086f4d7dacc5c1e9e8a571f5
+          sortingKey: "000220"
+          type: text-cell-p
+          content: insieme degli oggetti di cui calcolerò delle proprietà
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: f5e5639a574646a39a3430789658bb4e
+          blockGroup: 2a8cd6ac6e8f4732bd15fe19c045edd5
+          sortingKey: "000221"
+          type: code
+          content: datapoints = positive_datapoints + negative_datapoints
+          metadata:
+            deepnote_app_block_visible: true
+        - id: b1d5a5f6ec3042b39785006b860b1222
+          blockGroup: 983301342efb4b7eb3dd0490e5d5a644
+          sortingKey: "000222"
+          type: code
+          content: len(datapoints),datapoints[:10]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: c0666e6dd58f4e9b96a26a1b6a95aca6
+          blockGroup: da9b15f1827c4a8d9f29d68326ffa43e
+          sortingKey: "000223"
+          type: text-cell-h3
+          content: Jaccard Coefficient
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 36ac00155f8247fc92a7aa6377428d5c
+          blockGroup: dc0d326da7ab44ba99e97dae9bb5a85a
+          sortingKey: "000224"
+          type: text-cell-p
+          content: "Prima proprietà che calcolo: per ogni coppia misura la similarità basata sui vicini comuni -> quanto il
+            proprio vicinato si sovrappone."
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: e5a00a920fbb47deacf0706838473e1a
+          blockGroup: cf6b65bed8a244988237a4940df0c188
+          sortingKey: "000225"
+          type: text-cell-p
+          content: Data una coppia (u, v) ne calcolo il jaccard coefficient utilizzando il grafo G_0 (training)
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 4203121d37b0437bbc5888a442360ce2
+          blockGroup: 7f873627e33a4802a3b6a0086bf55fd1
+          sortingKey: "000226"
+          type: code
+          content: dataset_link_prediction['jaccard'] = [p for _,_,p in nx.jaccard_coefficient(g_training, datapoints)]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: a6fd60433bdc4f759deb3e66dd2706fb
+          blockGroup: b8db3c0f4e3e4bc286a0ecf8ca41cd93
+          sortingKey: "000227"
+          type: code
+          content: dataset_link_prediction
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 4d55a0fbc74e4c719035694cbd70f1bc
+          blockGroup: 78acd5bc0c9147fca8e9f4595de5745f
+          sortingKey: "000228"
+          type: text-cell-h3
+          content: Resource Allocation Index
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: e483cbc776a54944b80171991fc80e7d
+          blockGroup: 842e45f69bc44b5ab7d9fab726a6783b
+          sortingKey: "000229"
+          type: text-cell-p
+          content: Strutta l'idea del vicinato in comune. Un nodo hub è probabile che si spenda di meno a creare una connessione
+            tra due nodi, meglio un nodo che è solo collegato tra i due nodi, senza avere altre connessioni.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a465c445ee7a4cba8e7321546bf47ff6
+          blockGroup: 8eea90b4e1554d64a93f8bab9e2f16ad
+          sortingKey: "000230"
+          type: code
+          content: dataset_link_prediction['rai'] = [p for _,_,p in nx.resource_allocation_index(g_training, datapoints)]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: dd189614b64b4d80b2f21cc6c0c4d655
+          blockGroup: 010eca8da9364f6e9db4703029ddb8e1
+          sortingKey: "000231"
+          type: text-cell-h3
+          content: Adamic-Adar Index
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 910418d9338e4fd8b5c8a739c36288b6
+          blockGroup: 1b6c1691ddcf4ced8c3a5ac402a8d089
+          sortingKey: "000232"
+          type: text-cell-p
+          content: Data una coppia (u, v) ne calcolo l'Adamic-adar index (somma degli inversi dei logaritmi dei gradi dei vicini
+            comuni)
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: ade12bbef92b421eab10dbffe3048d64
+          blockGroup: b32d11e4a37f4209aa382e3c8c819b08
+          sortingKey: "000233"
+          type: code
+          content: dataset_link_prediction['aai'] = [p for _,_,p in nx.adamic_adar_index(g_training, datapoints)]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: f028585deb0240b1ad33f584c66c0c88
+          blockGroup: 89fc4b97d973439297304cec29f71abc
+          sortingKey: "000234"
+          type: text-cell-h3
+          content: Preferential Attachment Index
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: b488ade39fc14aaebc7d95767ff3981e
+          blockGroup: c83656b411f24056a5a9e1dd4f488d48
+          sortingKey: "000235"
+          type: text-cell-p
+          content: Il preferential attachment è il risultato del prodotto del grado dei due estremi (attori).
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 5cb356857f7e48b8a23f1e439d812f43
+          blockGroup: f079cda867e745a892639efd70c078e2
+          sortingKey: "000236"
+          type: code
+          content: dataset_link_prediction['pref'] = [p for _,_,p in nx.preferential_attachment(g_training, datapoints)]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 3f57a5859328463a878af0532f769cd0
+          blockGroup: 2d0f9e10b1c0472ba82e695ed5286ef6
+          sortingKey: "000237"
+          type: text-cell-p
+          content: "Infine inserisco la colonna delle etichette "
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: eed3bff5a7914db692f0fdfac03ef5ee
+          blockGroup: 856b7a54893e43e3bf47524b93c619bb
+          sortingKey: "000238"
+          type: code
+          content: dataset_link_prediction['label'] = [1 for _ in range(len(positive_datapoints))] + [0 for _ in
+            range(len(negative_datapoints))]
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 119af654906648a6a28ea7b34fa8a295
+          blockGroup: 9911e32451d34fa8a50b20b2f2929e3c
+          sortingKey: "000239"
+          type: code
+          content: "dataset_link_prediction.head() #primi 5"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 4054aa09dc874dd4bff0baaca80f2261
+          blockGroup: 0d518c64f718489192d4a5fb7c003698
+          sortingKey: "000240"
+          type: text-cell-h3
+          content: Apprendimento supervisionato
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 515a5c8b5cf34078b3566e69aa042406
+          blockGroup: e90e369c30b44071b4ba7ec42cc7763b
+          sortingKey: "000241"
+          type: text-cell-p
+          content: 1) separare la matrice delle feature dal vettore delle etichette
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 9a55880b803e4da9a565697953c18c05
+          blockGroup: ac4b218241d64edfbb20946b620a050c
+          sortingKey: "000242"
+          type: code
+          content: >-
+            X = dataset_link_prediction[['jaccard','rai','aai','pref']] #feature matrix
+
+            y = dataset_link_prediction['label'] # label
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 260b085d058147baab10584b911838a7
+          blockGroup: 7221f5f960de4213b2c3f85c021ac3bd
+          sortingKey: "000243"
+          type: text-cell-p
+          content: "Dimensione X e y: ((1082, 4), (1082,))"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: f7510aa0fefa44c3b487f036267d2a02
+          blockGroup: 1005d795e7984c62ae833b4e9fab2a62
+          sortingKey: "000244"
+          type: code
+          content: X.shape, y.shape
+          metadata:
+            deepnote_app_block_visible: true
+        - id: ab2d9f9aa2904f1895c0a55d0a545133
+          blockGroup: b08c0861239648b4abd173693c90a2bb
+          sortingKey: "000245"
+          type: text-cell-p
+          content: "2) divisione training e test: uso il metodo train_test_split di SKL."
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 32569d42feef4f3cb6c580f2f2d212c4
+          blockGroup: b82a51c78aaf42da96913c326552fd8c
+          sortingKey: "000246"
+          type: code
+          content: X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True, random_state=42)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 915d03655af847d7a03b50fe499822fc
+          blockGroup: 175e2441d1174871a39f66d1f43ce5b9
+          sortingKey: "000247"
+          type: code
+          content: "X_train.shape #(757, 4)"
+          metadata:
+            deepnote_app_block_visible: true
+        - id: c14d846e06fb437c810cdd27644932c0
+          blockGroup: d714744024c44915a0e99dc95b27aa8b
+          sortingKey: "000248"
+          type: text-cell-p
+          content: 3) Ridimensionamento delle Feature (Feature Scaling)
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: d5320c1c0954456d8420be0f551f3e05
+          blockGroup: abaa9b3f964345a4bc85e50bbfabffd5
+          sortingKey: "000249"
+          type: code
+          content: >-
+            ct = ColumnTransformer([
+                ('minmax',MinMaxScaler(),['jaccard','rai','aai','pref'])
+            ])
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 5a1e82cb72884bdcb7e8845a92195468
+          blockGroup: 278d1ed82e394bde9ae946e17f17ddc7
+          sortingKey: "000250"
+          type: text-cell-p
+          content: 4) Classificazione mediante Logistic Regression
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: a74510717e3b41ccbb2790036a7f099f
+          blockGroup: dcbcd9ccf5824b798edf84de6082e6be
+          sortingKey: "000251"
+          type: code
+          content: >-
+            link_predictor = Pipeline([
+                ('preprocessing',ct),
+                ('classifier',LogisticRegression(penalty='none'))
+            ]
+
+            )
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 235722018697455687125b527b681700
+          blockGroup: d9e752c5da9a45708f2ba1785148ec82
+          sortingKey: "000252"
+          type: text-cell-p
+          content: Procediamo con la fase di apprendimento, utilizzando la matrice delle feature standardizzate.
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 5b85a947f5fb4a439d3ad217c7cfa10d
+          blockGroup: e8c622c666974560a8d46d9982c19101
+          sortingKey: "000253"
+          type: code
+          content: link_predictor.fit(X_train, y_train)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: cf08671bd3ef4e73839349c131588579
+          blockGroup: d6664342996e409da0d6694bb8541ea8
+          sortingKey: "000254"
+          type: code
+          content: y_predicted = link_predictor.predict(X_test)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: b335a91942f944fd8d8e09ba504fcfd8
+          blockGroup: bc1d51dc81894f3b9fae9c6c8d42a09b
+          sortingKey: "000255"
+          type: text-cell-p
+          content: 5) Valutazione del modello
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 4fcf650061bc4909826c62c469afaff0
+          blockGroup: 9733cdde37674745aba6cbdc883ba8ac
+          sortingKey: "000256"
+          type: code
+          content: accuracy_score(y_test, y_predicted)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 12aab30360c548faad67bb1c7fbe34a5
+          blockGroup: 2c7a54b6ff2a4b448efc5f4794c2a196
+          sortingKey: "000257"
+          type: code
+          content: f1_score(y_test, y_predicted), recall_score(y_test, y_predicted), precision_score(y_test, y_predicted)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 6cd6447031304ef99381c36927648d35
+          blockGroup: 5464af5afd00467eb6b23282fcf0c9f4
+          sortingKey: "000258"
+          type: code
+          content: confusion_matrix(y_predicted, y_test)
+          metadata:
+            deepnote_app_block_visible: true
+        - id: a0ed99ce9a2a4b2f9b8b92f0ab488170
+          blockGroup: 232a295a9b114746af45dc06a15e38ef
+          sortingKey: "000259"
+          type: code
+          content: ConfusionMatrixDisplay.from_predictions(y_test, y_predicted, cmap = 'Blues')
+          metadata:
+            deepnote_app_block_visible: true
+        - id: 296e6ebbe58c44b9ba6886d072d1a920
+          blockGroup: d1e338c6c35b49ada0651646804ac7fb
+          sortingKey: "000260"
+          type: text-cell-p
+          content: "Ruolo delle feature:"
+          metadata:
+            deepnote_app_block_visible: true
+            formattedRanges: []
+        - id: 30a7d6e8cd1a48d6b5654ae077bac4c7
+          blockGroup: a32026bba3a64e6b9caf6ec302d4ee1b
+          sortingKey: "000261"
+          type: code
+          content: link_predictor['classifier'].coef_
+          metadata:
+            deepnote_app_block_visible: true
+      executionMode: block
+      id: 9d6213b390ac4f8d94de6204ac779dfa
+      isModule: true
+      name: TheMovieDB
+version: 1.0.0
